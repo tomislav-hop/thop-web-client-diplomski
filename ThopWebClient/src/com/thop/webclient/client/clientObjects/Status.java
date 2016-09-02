@@ -1,7 +1,14 @@
 package com.thop.webclient.client.clientObjects;
 
-public class Status {
+import java.io.Serializable;
 
+public class Status implements Serializable {
+
+	public Status() {
+		super();
+	}
+
+	private static final long serialVersionUID = 1869858221877194614L;
 	private Integer statusId;
 	private String statusName;
 	private String statusDescription;

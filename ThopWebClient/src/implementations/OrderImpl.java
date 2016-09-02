@@ -4,10 +4,10 @@ import java.util.List;
 
 import javax.swing.table.DefaultTableModel;
 
-import gsonObjects.Item;
-import gsonObjects.Order;
-import gsonObjects.OrderItems;
-import gsonObjects.Package;
+import com.thop.webclient.client.clientObjects.Item;
+import com.thop.webclient.client.clientObjects.Order;
+import com.thop.webclient.client.clientObjects.OrderItems;
+import com.thop.webclient.client.clientObjects.Package;
 import requests.AddOrder;
 import requests.GetOrderItemsList;
 import requests.GetOrders;

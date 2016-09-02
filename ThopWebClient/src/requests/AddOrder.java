@@ -8,10 +8,10 @@ import javax.swing.table.DefaultTableModel;
 
 import com.google.gson.Gson;
 
-import gsonObjects.Item;
-import gsonObjects.Order;
-import gsonObjects.OrderItems;
-import gsonObjects.Package;
+import com.thop.webclient.client.clientObjects.Item;
+import com.thop.webclient.client.clientObjects.Order;
+import com.thop.webclient.client.clientObjects.OrderItems;
+import com.thop.webclient.client.clientObjects.Package;
 import implementations.ItemImpl;
 import implementations.OrderImpl;
 import implementations.PackageImpl;

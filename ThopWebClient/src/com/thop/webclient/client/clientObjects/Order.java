@@ -1,7 +1,9 @@
 package com.thop.webclient.client.clientObjects;
 
-public class Order {
+import java.io.Serializable;
 
+public class Order implements Serializable {
+	private static final long serialVersionUID = -3107471882550221705L;
 	private int orderId;
 	private String orderOrdered;
 	private String orderAdress;
@@ -9,6 +11,10 @@ public class Order {
 	private String additionalNotes;
 	private int statusId;
 	private int user_id;
+
+	public Order() {
+		super();
+	}
 
 	public Order(int orderId, String orderOrdered, String orderAdress, String orderDate, String additionalNotes, int statusId, int user_id) {
 		super();

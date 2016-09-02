@@ -7,7 +7,7 @@ import java.util.List;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import gsonObjects.Item;
+import com.thop.webclient.client.clientObjects.Item;
 import implementations.Urls;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;

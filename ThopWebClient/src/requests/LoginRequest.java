@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import com.google.gson.Gson;
 
-import gsonObjects.User;
+import com.thop.webclient.client.clientObjects.User;
 import implementations.Urls;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;

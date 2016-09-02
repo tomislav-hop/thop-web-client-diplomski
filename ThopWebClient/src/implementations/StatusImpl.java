@@ -2,7 +2,7 @@ package implementations;
 
 import java.util.List;
 
-import gsonObjects.Status;
+import com.thop.webclient.client.clientObjects.Status;
 import requests.GetStatusList;
 
 public class StatusImpl {

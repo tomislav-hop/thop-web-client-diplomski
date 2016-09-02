@@ -1,16 +1,12 @@
 package com.thop.webclient.client;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.cellview.client.CellTable;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -26,7 +22,7 @@ import com.google.gwt.view.client.SingleSelectionModel;
 import com.thop.webclient.client.clientObjects.Order;
 
 public class ThopWebClient implements EntryPoint {
-	private final ServiceAsync greetingService = GWT.create(Service.class);
+	public static final ServiceAsync SERVICE = GWT.create(Service.class);
 	private RootPanel rootPanel;
 	private RootPanel errorPanel;
 	private TextBox nameField;
@@ -38,6 +34,8 @@ public class ThopWebClient implements EntryPoint {
 	private PushButton btnViewOrderHistory;
 	private PushButton btnBakeTime;
 	private CellTable<Order> orderTable;
+	private int userId;
+	private List<Order> orderList;
 
 	public void onModuleLoad() {
 
@@ -69,6 +67,10 @@ public class ThopWebClient implements EntryPoint {
 		loginTable.setWidget(2, 0, sendButton);
 		loginTable.getFlexCellFormatter().setColSpan(2, 0, 2);
 		rootPanel.add(loginTable);
+		
+		//TODO: Remove
+		nameField.setValue("test");
+		passwordField.setValue("test");
 
 		//================================================================================
 		// Main menu
@@ -92,61 +94,6 @@ public class ThopWebClient implements EntryPoint {
 		errorPanel.add(errorLabel);
 
 		//================================================================================
-		// Orders table
-		//================================================================================
-		List<Order> orderList = new ArrayList<>();
-		Order o = new Order(1, "sada", "sadfasd", "sadasd", "sadasd", 2, 2);
-		Order o2 = new Order(1, "sada", "sadfasd", "sadasd", "sadasd", 2, 2);
-		Order o3 = new Order(1, "sada", "sadfasd", "sadasd", "sadasd", 2, 2);
-		Order o4 = new Order(1, "sada", "sadfasd", "sadasd", "sadasd", 2, 2);
-		orderList.add(o);
-		orderList.add(o2);
-		orderList.add(o3);
-		orderList.add(o4);
-		
-		orderTable = new CellTable<Order>();
-		orderTable.setWidth("100%");
-		orderTable.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.ENABLED);
-
-		TextColumn<Order> nameColumn = new TextColumn<Order>() {
-			@Override
-			public String getValue(Order object) {
-				return object.getAdditionalNotes();
-			}
-		};
-		orderTable.addColumn(nameColumn, "Additional notes");
-
-		TextColumn<Order> adressColumn = new TextColumn<Order>() {
-			@Override
-			public String getValue(Order object) {
-				return object.getOrderAdress();
-			}
-		};
-		orderTable.addColumn(adressColumn, "Adress");
-
-		  // Add a selection model to handle user selection.
-	    final SingleSelectionModel<Order> selectionModel = new SingleSelectionModel<Order>();
-	    orderTable.setSelectionModel(selectionModel);
-	    selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-	      public void onSelectionChange(SelectionChangeEvent event) {
-	        Order selected = selectionModel.getSelectedObject();
-	        if (selected != null) {
-	          //Window.alert("You selected: " + selected.name);
-	        }
-	      }
-	    });
-
-	    // Set the total row count. This isn't strictly necessary, but it affects
-	    // paging calculations, so its good habit to keep the row count up to date.
-	    orderTable.setRowCount(orderList.size(), true);
-
-	    // Push the data into the widget.
-	    orderTable.setRowData(0, orderList);
-
-		
-		rootPanel.add(orderTable);
-
-		//================================================================================
 		// Login click handler
 		//================================================================================
 		class LoginHandler implements ClickHandler {
@@ -158,20 +105,25 @@ public class ThopWebClient implements EntryPoint {
 			private void login() {
 				String username = nameField.getText();
 				String password = passwordField.getText();
-				greetingService.login(username, password, new AsyncCallback<String>() {
+				SERVICE.login(username, password, new AsyncCallback<Integer>() {
 					public void onFailure(Throwable caught) {
 
 					}
 
-					public void onSuccess(String result) {
+					public void onSuccess(Integer result) {
 						//NotificationDialog nd = new NotificationDialog();
 						//nd.displayNotificationDialog("Test", result).show();
 						//rootPanel.remove(0);
 						rootPanel.add(mainMenuTable);
+						userId = result;
 					}
 				});
 			}
 		}
+
+		//================================================================================
+		// Orders table
+		//================================================================================
 
 		//================================================================================
 		// Add Order click handler
@@ -185,12 +137,12 @@ public class ThopWebClient implements EntryPoint {
 			private void login() {
 				String username = nameField.getText();
 				String password = passwordField.getText();
-				greetingService.login(username, password, new AsyncCallback<String>() {
+				SERVICE.login(username, password, new AsyncCallback<Integer>() {
 					public void onFailure(Throwable caught) {
 
 					}
 
-					public void onSuccess(String result) {
+					public void onSuccess(Integer result) {
 
 					}
 				});
@@ -206,17 +158,7 @@ public class ThopWebClient implements EntryPoint {
 			}
 
 			private void login() {
-				String username = nameField.getText();
-				String password = passwordField.getText();
-				greetingService.login(username, password, new AsyncCallback<String>() {
-					public void onFailure(Throwable caught) {
-
-					}
-
-					public void onSuccess(String result) {
-
-					}
-				});
+				getOrderHistoryForUser();
 			}
 		}
 		//================================================================================
@@ -230,13 +172,17 @@ public class ThopWebClient implements EntryPoint {
 			private void login() {
 				String username = nameField.getText();
 				String password = passwordField.getText();
-				greetingService.login(username, password, new AsyncCallback<String>() {
+				SERVICE.login(username, password, new AsyncCallback<Integer>() {
 					public void onFailure(Throwable caught) {
-
+						errorLabel.setText("Login service failed");
 					}
 
-					public void onSuccess(String result) {
-
+					public void onSuccess(Integer result) {
+						if (result != -1) {
+							userId = result;
+						} else {
+							errorLabel.setText("Login incorrect!");
+						}
 					}
 				});
 			}
@@ -254,5 +200,94 @@ public class ThopWebClient implements EntryPoint {
 		btnViewOrderHistory.addClickHandler(viewOrderHistoryHandler);
 		btnBakeTime.addClickHandler(bakeTimeHandler);
 
+	}
+
+	private void getOrderHistoryForUser() {
+		SERVICE.getOrderList(userId, new AsyncCallback<List<Order>>() {
+
+			@Override
+			public void onFailure(Throwable caught) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void onSuccess(List<Order> result) {
+				orderList = result;
+				orderTable = new CellTable<Order>();
+				orderTable.setWidth("100%");
+				orderTable.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.ENABLED);
+
+				TextColumn<Order> idOrderColumn = new TextColumn<Order>() {
+					@Override
+					public String getValue(Order object) {
+						return String.valueOf(object.getOrderId());
+					}
+				};
+				orderTable.addColumn(idOrderColumn, "Order ID");
+
+				TextColumn<Order> orderedByColumn = new TextColumn<Order>() {
+					@Override
+					public String getValue(Order object) {
+						return object.getOrderOrdered();
+					}
+				};
+				orderTable.addColumn(orderedByColumn, "Ordered by");
+				
+				TextColumn<Order> adressColumn = new TextColumn<Order>() {
+					@Override
+					public String getValue(Order object) {
+						return object.getOrderAdress();
+					}
+				};
+				orderTable.addColumn(adressColumn, "Adress");
+				
+				TextColumn<Order> orderDateColumn = new TextColumn<Order>() {
+					@Override
+					public String getValue(Order object) {
+						return object.getOrderDate();
+					}
+				};
+				orderTable.addColumn(orderDateColumn, "Order date");
+				
+				TextColumn<Order> additionalNotesColumn = new TextColumn<Order>() {
+					@Override
+					public String getValue(Order object) {
+						return object.getOrderDate();
+					}
+				};
+				orderTable.addColumn(additionalNotesColumn, "Additional notes");
+				
+				TextColumn<Order> idStatusColumn = new TextColumn<Order>() {
+					@Override
+					public String getValue(Order object) {
+						return String.valueOf(object.getStatusId());
+					}
+				};
+				orderTable.addColumn(idStatusColumn, "Order ID");
+				
+
+				// Add a selection model to handle user selection.
+				final SingleSelectionModel<Order> selectionModel = new SingleSelectionModel<Order>();
+				orderTable.setSelectionModel(selectionModel);
+				selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
+					public void onSelectionChange(SelectionChangeEvent event) {
+						Order selected = selectionModel.getSelectedObject();
+						if (selected != null) {
+							//Window.alert("You selected: " + selected.name);
+						}
+					}
+				});
+
+				// Set the total row count. This isn't strictly necessary, but it affects
+				// paging calculations, so its good habit to keep the row count up to date.
+				orderTable.setRowCount(orderList.size(), true);
+
+				// Push the data into the widget.
+				orderTable.setRowData(0, orderList);
+
+				rootPanel.add(orderTable);
+			}
+		});
 	}
 }

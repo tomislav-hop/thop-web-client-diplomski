@@ -1,10 +1,17 @@
 package com.thop.webclient.client.clientObjects;
 
-public class Package {
+import java.io.Serializable;
 
+public class Package implements Serializable {
+
+	private static final long serialVersionUID = -8142460749162341265L;
 	private int packageId;
 	private String packageName;
 	private String packageDescription;
+
+	public Package() {
+		super();
+	}
 
 	public Package(int packageId, String packageName, String packageDescription) {
 		super();

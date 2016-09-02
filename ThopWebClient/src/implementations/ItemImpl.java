@@ -2,7 +2,7 @@ package implementations;
 
 import java.util.List;
 
-import gsonObjects.Item;
+import com.thop.webclient.client.clientObjects.Item;
 import requests.GetBakeTime;
 import requests.GetItemList;
 

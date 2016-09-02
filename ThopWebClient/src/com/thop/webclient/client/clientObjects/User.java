@@ -1,8 +1,15 @@
 package com.thop.webclient.client.clientObjects;
 
-public class User {
+import java.io.Serializable;
+
+public class User implements Serializable {
+	private static final long serialVersionUID = 4441131410687560299L;
 	String username;
 	String password;
+
+	public User() {
+		super();
+	}
 
 	public User(String username, String password) {
 		super();

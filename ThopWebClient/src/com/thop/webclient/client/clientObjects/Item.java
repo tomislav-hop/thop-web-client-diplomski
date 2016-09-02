@@ -1,11 +1,17 @@
 package com.thop.webclient.client.clientObjects;
 
-public class Item {
+import java.io.Serializable;
 
+public class Item implements Serializable {
+	private static final long serialVersionUID = -3283209333708834470L;
 	private Integer itemId;
 	private String itemName;
 	private String itemDescription;
 	private Double itemTimePerKg;
+
+	public Item() {
+		super();
+	}
 
 	public Item(Integer itemId, String itemName, String itemDescription, Double itemTimePerKg) {
 		super();

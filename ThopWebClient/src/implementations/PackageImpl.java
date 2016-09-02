@@ -2,7 +2,7 @@ package implementations;
 
 import java.util.List;
 
-import gsonObjects.Package;
+import com.thop.webclient.client.clientObjects.Package;
 import requests.GetPackageList;
 
 public class PackageImpl {
