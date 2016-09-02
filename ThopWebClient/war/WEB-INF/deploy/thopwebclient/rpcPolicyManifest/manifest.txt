@@ -1,0 +1,3 @@
+# Module thopwebclient
+# RPC service class, partial path of RPC policy file
+com.thop.webclient.client.Service, C1C076ED3C3D5186DE71079981A9321C.gwt.rpc

@@ -1,0 +1,2 @@
+serviceClass: com.thop.webclient.client.Service
+path: C1C076ED3C3D5186DE71079981A9321C.gwt.rpc
