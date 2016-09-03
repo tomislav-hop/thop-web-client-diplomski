@@ -1,17 +1,13 @@
 package requests;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.table.DefaultTableModel;
 
 import com.google.gson.Gson;
 
-import com.thop.webclient.client.clientObjects.Item;
 import com.thop.webclient.client.clientObjects.Order;
 import com.thop.webclient.client.clientObjects.OrderItems;
-import com.thop.webclient.client.clientObjects.Package;
 import implementations.ItemImpl;
 import implementations.OrderImpl;
 import implementations.PackageImpl;
