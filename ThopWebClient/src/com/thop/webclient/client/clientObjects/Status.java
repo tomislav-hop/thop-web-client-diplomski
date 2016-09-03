@@ -1,6 +1,7 @@
 package com.thop.webclient.client.clientObjects;
 
 import java.io.Serializable;
+import java.util.List;
 
 public class Status implements Serializable {
 
@@ -18,6 +19,24 @@ public class Status implements Serializable {
 		this.statusId = statusId;
 		this.statusName = statusName;
 		this.statusDescription = statusDescription;
+	}
+
+	public int getStatusId(List<Status> statusList, String selectedStatus) {
+		for (Status s : statusList) {
+			if (s.getStatusName().equalsIgnoreCase(selectedStatus)) {
+				return s.getStatusId();
+			}
+		}
+		return -1;
+	}
+
+	public String getStatusName(List<Status> statusList, int idStatus) {
+		for (Status s : statusList) {
+			if (s.getStatusId() == idStatus) {
+				return s.getStatusName();
+			}
+		}
+		return null;
 	}
 
 	public Integer getStatusId() {

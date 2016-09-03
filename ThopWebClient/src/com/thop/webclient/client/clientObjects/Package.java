@@ -1,6 +1,7 @@
 package com.thop.webclient.client.clientObjects;
 
 import java.io.Serializable;
+import java.util.List;
 
 public class Package implements Serializable {
 
@@ -18,6 +19,24 @@ public class Package implements Serializable {
 		this.packageId = packageId;
 		this.packageName = packageName;
 		this.packageDescription = packageDescription;
+	}
+
+	public int getPackageId(List<Package> packageList, String packageName) {
+		for (Package p : packageList) {
+			if (p.getPackageName().equalsIgnoreCase(packageName)) {
+				return p.getPackageId();
+			}
+		}
+		return -1;
+	}
+
+	public String getPackageName(List<Package> packageList, int packageId) {
+		for (Package p : packageList) {
+			if (p.getPackageId() == packageId) {
+				return p.getPackageName();
+			}
+		}
+		return null;
 	}
 
 	public int getPackageId() {

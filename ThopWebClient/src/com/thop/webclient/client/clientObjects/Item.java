@@ -1,6 +1,7 @@
 package com.thop.webclient.client.clientObjects;
 
 import java.io.Serializable;
+import java.util.List;
 
 public class Item implements Serializable {
 	private static final long serialVersionUID = -3283209333708834470L;
@@ -19,6 +20,26 @@ public class Item implements Serializable {
 		this.itemName = itemName;
 		this.itemDescription = itemDescription;
 		this.itemTimePerKg = itemTimePerKg;
+	}
+	
+	public int getItemId(List<Item> itemList, String itemName) {
+
+		for (Item i : itemList) {
+			if (i.getItemName().equalsIgnoreCase(itemName)) {
+				return i.getItemId();
+			}
+		}
+		return -1;
+	}
+
+	public String getItemName(List<Item> itemList, int itemId) {
+
+		for (Item i : itemList) {
+			if (i.getItemId() == itemId) {
+				return i.getItemName();
+			}
+		}
+		return null;
 	}
 
 	public Integer getItemId() {

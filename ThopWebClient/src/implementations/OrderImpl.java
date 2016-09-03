@@ -14,12 +14,12 @@ import requests.GetOrders;
 
 public class OrderImpl {
 
-	public int sendAddOrderRequest(String orderedBy, String adress, String orderDate, String additionalNotes, int status_id, int user_id) {
-		return new AddOrder().sendAddOrderRequest(orderedBy, adress, orderDate, additionalNotes, status_id, user_id);
+	public int sendAddOrderRequest(Order order) {
+		return new AddOrder().sendAddOrderRequest(order);
 	}
 
-	public boolean addItemsToOrder(int idOrder, DefaultTableModel model, List<Item> itemList, List<Package> packageList) {
-		return new AddOrder().addItemsToOrder(idOrder, model, itemList, packageList);
+	public boolean addItemsToOrder(int orderId, List<OrderItems> orderItemsList) {
+		return new AddOrder().addItemsToOrder(orderId, orderItemsList);
 	}
 
 	public List<Order> getOrderList(int userId) {
