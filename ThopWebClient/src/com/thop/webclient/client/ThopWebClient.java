@@ -12,14 +12,17 @@ import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.cellview.client.TextColumn;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.FlexTable;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
+import com.google.gwt.user.client.ui.MenuBar;
+import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.PushButton;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -39,18 +42,13 @@ import com.thop.webclient.client.clientObjects.Status;
 public class ThopWebClient implements EntryPoint {
 	public static final ServiceAsync SERVICE = GWT.create(Service.class);
 	private RootPanel rootPanel;
-	private RootPanel errorPanel;
-	private Label errorLabel;
+	private RootPanel bottomPanel;
 	private TextBox nameField;
 	private TextBox passwordField;
 	private Button sendButton;
 	private FlexTable loginTable;
-	private FlexTable mainMenuTable;
 	private FlexTable addOrderTable;
 	private FlexTable orderItemButtonTable;
-	private PushButton btnAddOrder;
-	private PushButton btnViewOrderHistory;
-	private PushButton btnBakeTime;
 	private PushButton btnAddItem;
 	private PushButton btnEditItem;
 	private PushButton btnRemoveItem;
@@ -70,11 +68,16 @@ public class ThopWebClient implements EntryPoint {
 	private TextArea additionalNotes;
 	private CellTable<OrderItems> orderItemsTable;
 	private List<OrderItems> orderItemList = new ArrayList<OrderItems>();
+	private List<OrderItems> historyOrderItemList = new ArrayList<OrderItems>();
 	private ListBox timeListBox;
 	private ListBox deliveryTimeListBox;
 	private ListBox deadlineDateTimeListBox;
 	private OrderItems newOrderItem;
 	private Order order;
+	private boolean firstTimeHistory = true;
+	private boolean firstTimeAddOrder = true;
+	private MenuBar menu;
+	private OrderItems selectedItem;
 
 	public void onModuleLoad() {
 
@@ -82,7 +85,7 @@ public class ThopWebClient implements EntryPoint {
 		// Main containers
 		//================================================================================
 		rootPanel = RootPanel.get("mainContainer");
-		errorPanel = RootPanel.get("errorLabelContainer");
+		bottomPanel = RootPanel.get("bottomContainer");
 
 		//================================================================================
 		// Login
@@ -106,6 +109,7 @@ public class ThopWebClient implements EntryPoint {
 		loginTable.setWidget(2, 0, sendButton);
 		loginTable.getFlexCellFormatter().setColSpan(2, 0, 2);
 		rootPanel.add(loginTable);
+		sendButton.addStyleName("sendButton");
 
 		//TODO: Remove
 		nameField.setValue("test");
@@ -114,23 +118,36 @@ public class ThopWebClient implements EntryPoint {
 		//================================================================================
 		// Main menu
 		//================================================================================
-		btnAddOrder = new PushButton(new Image(""));
-		btnAddOrder.setText("Add Order");
-		btnViewOrderHistory = new PushButton(new Image(""));
-		btnViewOrderHistory.setText("View Order History");
-		btnBakeTime = new PushButton(new Image(""));
-		btnBakeTime.setText("Bake time");
-		mainMenuTable = new FlexTable();
-		mainMenuTable.setWidget(0, 0, btnAddOrder);
-		mainMenuTable.setWidget(0, 1, btnViewOrderHistory);
-		mainMenuTable.setWidget(0, 2, btnBakeTime);
+		Command addOrderCommand = new Command() {
+			public void execute() {
+				cleanUI();
+				displayAddOrder();
+			}
+		};
 
-		//================================================================================
-		// Label for displaying errors
-		//================================================================================
-		errorLabel = new Label();
-		sendButton.addStyleName("sendButton");
-		errorPanel.add(errorLabel);
+		Command orderHistoryCommand = new Command() {
+			public void execute() {
+				cleanUI();
+				getOrderHistoryForUser();
+			}
+		};
+
+		Command bakeTimeCommand = new Command() {
+			public void execute() {
+				cleanUI();
+			}
+		};
+
+		menu = new MenuBar();
+		menu.setAutoOpen(true);
+		menu.setWidth("950px");
+		menu.setAnimationEnabled(true);
+		MenuItem m1 = new MenuItem("Add Order", addOrderCommand);
+		MenuItem m2 = new MenuItem("Order History", orderHistoryCommand);
+		MenuItem m3 = new MenuItem("Bake Time", bakeTimeCommand);
+		menu.addItem(m1);
+		menu.addItem(m2);
+		menu.addItem(m3);
 
 		//================================================================================
 		// Login click handler
@@ -146,226 +163,24 @@ public class ThopWebClient implements EntryPoint {
 				String password = passwordField.getText();
 				SERVICE.login(username, password, new AsyncCallback<Integer>() {
 					public void onFailure(Throwable caught) {
-						errorLabel.setText("Method 'l' has failed.");
+						Window.alert("Login method has failed");
 					}
 
 					public void onSuccess(Integer result) {
 						if (result != -1) {
 							fillLists();
-							rootPanel.add(mainMenuTable);
+							rootPanel.add(menu);
 							userId = result;
-							errorLabel.setText("");
 						} else {
 							rootPanel.add(loginTable);
-							errorLabel.setText("Invalid username or password");
+							Window.alert("Invalid username or password");
 						}
 					}
 				});
 			}
 		}
-
-		//================================================================================
-		// Add Order click handler
-		//================================================================================
-		class AddOrderHandler implements ClickHandler {
-			public void onClick(ClickEvent event) {
-				rootPanel.remove(0);
-				final Label lblOrderName = new Label("Name:");
-				lblOrderName.setWidth("100px");
-				orderNameField = new TextBox();
-				orderNameField.setWidth("800px");
-				orderNameField.setFocus(true);
-				final Label lblAdress = new Label("Adress:");
-				lblAdress.setWidth("100px");
-				orderAdressField = new TextBox();
-				orderAdressField.setWidth("800px");
-				final Label lblOrderDate = new Label("Order date:");
-				lblOrderDate.setWidth("100px");
-				orderDatePicker = new DatePicker();
-				orderDatePicker.setWidth("400px");
-
-				fillTimeListBox();
-				timeListBox.setWidth("400px");
-
-				final Label lblStatus = new Label("Status:");
-				lblStatus.setWidth("100px");
-				statusListBox.setWidth("800px");
-				final Label lblAdditionalNotes = new Label("Notes:");
-				lblAdditionalNotes.setWidth("100px");
-				additionalNotes = new TextArea();
-				additionalNotes.setWidth("800px");
-				additionalNotes.setHeight("150px");
-				addOrderTable = new FlexTable();
-				addOrderTable.setWidget(0, 0, lblOrderName);
-				addOrderTable.setWidget(0, 1, orderNameField);
-				addOrderTable.setWidget(1, 0, lblAdress);
-				addOrderTable.setWidget(1, 1, orderAdressField);
-				addOrderTable.setWidget(2, 0, lblOrderDate);
-				addOrderTable.setWidget(2, 1, orderDatePicker);
-				addOrderTable.setWidget(3, 1, timeListBox);
-				addOrderTable.setWidget(4, 0, lblStatus);
-				addOrderTable.setWidget(4, 1, statusListBox);
-				addOrderTable.setWidget(5, 0, lblAdditionalNotes);
-				addOrderTable.setWidget(5, 1, additionalNotes);
-				rootPanel.add(addOrderTable);
-				fillOrderItemsTable(false);
-
-				btnAddItem = new PushButton();
-				btnAddItem.setText("Add");
-				btnAddItem.setWidth("100px");
-				btnEditItem = new PushButton();
-				btnEditItem.setText("Edit");
-				btnEditItem.setWidth("100px");
-				btnRemoveItem = new PushButton();
-				btnRemoveItem.setText("Remove");
-				btnRemoveItem.setWidth("100px");
-				
-				btnSendOrder = new PushButton();
-				btnSendOrder.setText("Save order");
-				btnSendOrder.setWidth("910px");
-
-				errorPanel.add(btnSendOrder);
-
-				//================================================================================
-				// Save order click handler
-				//================================================================================
-				class SaveOrderHandler implements ClickHandler {
-					public void onClick(ClickEvent event) {
-						order = new Order();
-						order.setOrderOrdered(orderNameField.getText());
-						order.setOrderAdress(orderAdressField.getText());
-						order.setOrderDate(getSelectedTime(orderDatePicker, timeListBox));
-						order.setStatusId(new Status().getStatusId(statusList, statusListBox.getSelectedValue()));
-						order.setAdditionalNotes(additionalNotes.getText());
-						order.setUser_id(userId);
-						order.setOrderId(0);
-						SERVICE.addOrder(order, new AsyncCallback<Integer>() {
-							
-							@Override
-							public void onSuccess(Integer result) {
-								SERVICE.addOrderItems(orderItemList, result, new AsyncCallback<String>() {
-
-									@Override
-									public void onFailure(Throwable caught) {
-									}
-
-									@Override
-									public void onSuccess(String result) {
-										if(result.contains("Successfully added")){
-											errorLabel.setText("RADIIIIIIIIIIIIIIIIIIIIIIIIII");
-										}
-										GWT.log(result);
-									}
-								});
-								
-							}
-							
-							@Override
-							public void onFailure(Throwable caught) {
-							}
-						});
-					}
-				}
-				
-				//================================================================================
-				// Add item click handler
-				//================================================================================
-				class AddItemHandler implements ClickHandler {
-					public void onClick(ClickEvent event) {
-						DialogBox panel = getItemDialog(null);
-						panel.show();;
-					}
-				}
-
-				//================================================================================
-				// Edit item click handler
-				//================================================================================
-				class EditItemHandler implements ClickHandler {
-					public void onClick(ClickEvent event) {
-
-					}
-				}
-
-				//================================================================================
-				// Add item click handler
-				//================================================================================
-				class RemoveItemHandler implements ClickHandler {
-					public void onClick(ClickEvent event) {
-
-					}
-				}
-
-				SaveOrderHandler saveOrderhandler = new SaveOrderHandler();
-				AddItemHandler addItemHandler = new AddItemHandler();
-				EditItemHandler editItemHandler = new EditItemHandler();
-				RemoveItemHandler removeItemHandler = new RemoveItemHandler();
-				btnSendOrder.addClickHandler(saveOrderhandler);
-				btnAddItem.addClickHandler(addItemHandler);
-				btnEditItem.addClickHandler(editItemHandler);
-				btnRemoveItem.addClickHandler(removeItemHandler);
-
-				orderItemButtonTable = new FlexTable();
-				orderItemButtonTable.setWidget(0, 0, btnAddItem);
-				orderItemButtonTable.setWidget(0, 1, btnEditItem);
-				orderItemButtonTable.setWidget(0, 2, btnRemoveItem);
-
-				rootPanel.add(orderItemButtonTable);
-				rootPanel.add(orderItemsTable);
-
-			}
-		}
-
-		//================================================================================
-		// View History click handler
-		//================================================================================
-		class ViewOrderHistoryHandler implements ClickHandler {
-			public void onClick(ClickEvent event) {
-				login();
-			}
-
-			private void login() {
-				getOrderHistoryForUser();
-			}
-		}
-		//================================================================================
-		// Bake time click handler
-		//================================================================================
-		class BakeTimeHandler implements ClickHandler {
-			public void onClick(ClickEvent event) {
-				login();
-			}
-
-			private void login() {
-				String username = nameField.getText();
-				String password = passwordField.getText();
-				SERVICE.login(username, password, new AsyncCallback<Integer>() {
-					public void onFailure(Throwable caught) {
-						errorLabel.setText("Login service failed");
-					}
-
-					public void onSuccess(Integer result) {
-						if (result != -1) {
-							userId = result;
-						} else {
-							errorLabel.setText("Login incorrect!");
-						}
-					}
-				});
-			}
-		}
-
-		//================================================================================
-		// Add clickhandlers to buttons
-		//================================================================================
 		LoginHandler loginHandler = new LoginHandler();
-		AddOrderHandler addOrderHandler = new AddOrderHandler();
-		ViewOrderHistoryHandler viewOrderHistoryHandler = new ViewOrderHistoryHandler();
-		BakeTimeHandler bakeTimeHandler = new BakeTimeHandler();
-
 		sendButton.addClickHandler(loginHandler);
-		btnAddOrder.addClickHandler(addOrderHandler);
-		btnViewOrderHistory.addClickHandler(viewOrderHistoryHandler);
-		btnBakeTime.addClickHandler(bakeTimeHandler);
 
 	}
 
@@ -377,7 +192,7 @@ public class ThopWebClient implements EntryPoint {
 
 			@Override
 			public void onFailure(Throwable caught) {
-				errorLabel.setText("Method 'getOrderList' has failed.");
+				Window.alert("Method 'getOrderList' has failed.");
 			}
 
 			@Override
@@ -434,11 +249,28 @@ public class ThopWebClient implements EntryPoint {
 					public void onSelectionChange(SelectionChangeEvent event) {
 						Order selected = selectionModel.getSelectedObject();
 						if (selected != null) {
-							//TODO: Click on order handler
+							SERVICE.getOrderItemList(String.valueOf(selected.getOrderId()), new AsyncCallback<List<OrderItems>>() {
+
+								@Override
+								public void onFailure(Throwable caught) {
+									Window.alert("Method 'getOrderItemList' has failed.");
+								}
+
+								@Override
+								public void onSuccess(List<OrderItems> result) {
+									if (!firstTimeHistory) {
+										rootPanel.remove(2);
+									}
+									firstTimeHistory = false;
+									historyOrderItemList = result;
+									fillOrderItemsTable(false, true);
+								}
+							});
 						}
 					}
 				});
-				orderTable.setRowCount(orderList.size(), true);
+				orderTable.setPageSize(100);
+				orderTable.setRowCount(orderList.size(), false);
 				orderTable.setRowData(0, orderList);
 				rootPanel.add(orderTable);
 			}
@@ -459,7 +291,7 @@ public class ThopWebClient implements EntryPoint {
 				statusListBox = new ListBox();
 				for (Status s : statusList) {
 					statusListBox.addItem(s.getStatusName());
-					statusListBox.addItem(s.getStatusName());
+					//statusListBox2.addItem(s.getStatusName());
 				}
 				itemListBox = new ListBox();
 				for (Item i : itemList) {
@@ -473,7 +305,7 @@ public class ThopWebClient implements EntryPoint {
 
 			@Override
 			public void onFailure(Throwable caught) {
-				errorLabel.setText("Method 'getLists' has failed.");
+				Window.alert("Method 'getLists' has failed.");
 			}
 		});
 	}
@@ -481,7 +313,7 @@ public class ThopWebClient implements EntryPoint {
 	//================================================================================
 	// Item table
 	//================================================================================
-	private void fillOrderItemsTable(boolean reload) {
+	private void fillOrderItemsTable(boolean reload, boolean history) {
 
 		if (reload) {
 			rootPanel.remove(2);
@@ -576,15 +408,24 @@ public class ThopWebClient implements EntryPoint {
 			public void onSelectionChange(SelectionChangeEvent event) {
 				OrderItems selected = selectionModel.getSelectedObject();
 				if (selected != null) {
-					//TODO: Click on OrderItems handler
+					selectedItem = selected;
 				}
 			}
 		});
-		orderItemsTable.setRowCount(orderItemList.size(), true);
-		orderItemsTable.setRowData(0, orderItemList);
+
+		if (history) {
+			orderItemsTable.setRowCount(historyOrderItemList.size(), true);
+			orderItemsTable.setRowData(0, historyOrderItemList);
+		} else {
+			orderItemsTable.setRowCount(orderItemList.size(), true);
+			orderItemsTable.setRowData(0, orderItemList);
+		}
 		rootPanel.add(orderItemsTable);
 	}
 
+	//================================================================================
+	// Main menu
+	//================================================================================
 	private void fillTimeListBox() {
 		String[] timeList = { "00:00", "00:30", "01:00", "01:30", "02:00", "02:30", "03:00", "03:30", "04:00", "04:30", "05:00", "05:30", "06:00", "06:30", "07:00", "07:30", "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", "21:30", "22:00", "22:30", "23:00", "23:30" };
 		timeListBox = new ListBox();
@@ -597,6 +438,9 @@ public class ThopWebClient implements EntryPoint {
 		}
 	}
 
+	//================================================================================
+	// Dialog box used for adding and editing items
+	//================================================================================
 	private DialogBox getItemDialog(OrderItems orderItem) {
 		final DialogBox dialogBox = new DialogBox();
 		dialogBox.setText("Item");
@@ -661,8 +505,24 @@ public class ThopWebClient implements EntryPoint {
 		addItemtable.setWidget(8, 1, buttonTable);
 		returnPanel.add(addItemtable);
 
+		if (orderItem != null) {
+			itemListBox.setSelectedIndex(getSelectedItemIndex(orderItem.getId_item()));
+			checkBoxDelivery.setValue((orderItem.getDelivery() == 1) ? true : false);
+			checkBoxCool.setValue((orderItem.getCool() == 1) ? true : false);
+			checkBoxCut.setValue((orderItem.getCut() == 1) ? true : false);
+			weight.setText(String.valueOf(orderItem.getWeight()));
+			amount.setText(String.valueOf(orderItem.getAmount()));
+			packageListBox.setSelectedIndex(getSelectedPackageIndex(orderItem.getId_package()));
+			additionalNotes.setText(orderItem.getAdditionalNotes());
+		}
+
 		okButton.addClickHandler(new ClickHandler() {
 			public void onClick(ClickEvent event) {
+
+				if (selectedItem != null) {
+					orderItemList.remove(selectedItem);
+				}
+
 				newOrderItem = new OrderItems();
 				newOrderItem.setId_item(new Item().getItemId(itemList, itemListBox.getSelectedValue()));
 				newOrderItem.setDeadline(getSelectedTime(deadlineDatePicker, deadlineDateTimeListBox));
@@ -676,7 +536,9 @@ public class ThopWebClient implements EntryPoint {
 				newOrderItem.setAmount(Integer.parseInt(amount.getText()));
 				newOrderItem.setDeliveryTime(getSelectedTime(deliveryDatePicker, deliveryTimeListBox));
 				orderItemList.add(newOrderItem);
-				fillOrderItemsTable(true);
+				fillOrderItemsTable(true, false);
+				cleanUI();
+				displayAddOrder();
 				dialogBox.hide();
 			}
 		});
@@ -688,6 +550,37 @@ public class ThopWebClient implements EntryPoint {
 		return dialogBox;
 	}
 
+	//================================================================================
+	// Used for selecting the correct item in the list box for edit item
+	//================================================================================
+	private int getSelectedItemIndex(int idItem) {
+		int counter = 0;
+		for (Item i : itemList) {
+			if (i.getItemId() == idItem) {
+				return counter;
+			}
+			counter++;
+		}
+		return counter;
+	}
+
+	//================================================================================
+	// Used for selecting the correct package in the list box for edit item
+	//================================================================================
+	private int getSelectedPackageIndex(int idPackage) {
+		int counter = 0;
+		for (Package p : packageList) {
+			if (p.getPackageId() == idPackage) {
+				return counter;
+			}
+			counter++;
+		}
+		return counter;
+	}
+
+	//================================================================================
+	// Parse time selection into string for database
+	//================================================================================
 	private String getSelectedTime(DatePicker datePicker, ListBox lb) {
 		Date date = datePicker.getHighlightedDate();
 		DateTimeFormat fmt = DateTimeFormat.getFormat("yyyy-MM-dd");
@@ -695,5 +588,161 @@ public class ThopWebClient implements EntryPoint {
 		String time = lb.getSelectedValue();
 		String returnSelectedTime = dateString + " " + time + ":00";
 		return returnSelectedTime;
+	}
+
+	//================================================================================
+	// User interface cleanup
+	//================================================================================
+	public void cleanUI() {
+		rootPanel.clear();
+		rootPanel.add(menu);
+		bottomPanel.clear();
+	}
+
+	//================================================================================
+	// Display form used for order adding
+	//================================================================================
+	public void displayAddOrder() {
+		if (!firstTimeAddOrder) {
+			cleanUI();
+		}
+		firstTimeAddOrder = false;
+		final Label lblOrderName = new Label("Name:");
+		lblOrderName.setWidth("100px");
+		orderNameField = new TextBox();
+		orderNameField.setWidth("800px");
+		orderNameField.setFocus(true);
+		final Label lblAdress = new Label("Adress:");
+		lblAdress.setWidth("100px");
+		orderAdressField = new TextBox();
+		orderAdressField.setWidth("800px");
+		final Label lblOrderDate = new Label("Order date:");
+		lblOrderDate.setWidth("100px");
+		orderDatePicker = new DatePicker();
+		orderDatePicker.setWidth("400px");
+		fillTimeListBox();
+		timeListBox.setWidth("400px");
+		final Label lblStatus = new Label("Status:");
+		lblStatus.setWidth("100px");
+		statusListBox.setWidth("800px");
+		final Label lblAdditionalNotes = new Label("Notes:");
+		lblAdditionalNotes.setWidth("100px");
+		additionalNotes = new TextArea();
+		additionalNotes.setWidth("800px");
+		additionalNotes.setHeight("150px");
+		addOrderTable = new FlexTable();
+		addOrderTable.setWidget(0, 0, lblOrderName);
+		addOrderTable.setWidget(0, 1, orderNameField);
+		addOrderTable.setWidget(1, 0, lblAdress);
+		addOrderTable.setWidget(1, 1, orderAdressField);
+		addOrderTable.setWidget(2, 0, lblOrderDate);
+		addOrderTable.setWidget(2, 1, orderDatePicker);
+		addOrderTable.setWidget(3, 1, timeListBox);
+		addOrderTable.setWidget(4, 0, lblStatus);
+		addOrderTable.setWidget(4, 1, statusListBox);
+		addOrderTable.setWidget(5, 0, lblAdditionalNotes);
+		addOrderTable.setWidget(5, 1, additionalNotes);
+		rootPanel.add(addOrderTable);
+		fillOrderItemsTable(false, false);
+
+		//================================================================================
+		// Save order click handler
+		//================================================================================
+		class SaveOrderHandler implements ClickHandler {
+			public void onClick(ClickEvent event) {
+				order = new Order();
+				order.setOrderOrdered(orderNameField.getText());
+				order.setOrderAdress(orderAdressField.getText());
+				order.setOrderDate(getSelectedTime(orderDatePicker, timeListBox));
+				order.setStatusId(new Status().getStatusId(statusList, statusListBox.getSelectedValue()));
+				order.setAdditionalNotes(additionalNotes.getText());
+				order.setUser_id(userId);
+				order.setOrderId(0);
+				SERVICE.addOrder(order, new AsyncCallback<Integer>() {
+
+					@Override
+					public void onSuccess(Integer result) {
+						SERVICE.addOrderItems(orderItemList, result, new AsyncCallback<String>() {
+
+							@Override
+							public void onFailure(Throwable caught) {
+							}
+
+							@Override
+							public void onSuccess(String result) {
+								if (result.contains("Successfully added")) {
+									Window.alert("Order added successfully");
+								}
+								GWT.log(result);
+							}
+						});
+
+					}
+
+					@Override
+					public void onFailure(Throwable caught) {
+					}
+				});
+			}
+		}
+
+		//================================================================================
+		// Add item click handler
+		//================================================================================
+		class AddItemHandler implements ClickHandler {
+			public void onClick(ClickEvent event) {
+				DialogBox panel = getItemDialog(null);
+				panel.show();
+			}
+		}
+
+		//================================================================================
+		// Edit item click handler
+		//================================================================================
+		class EditItemHandler implements ClickHandler {
+			public void onClick(ClickEvent event) {
+				DialogBox panel = getItemDialog(selectedItem);
+				panel.show();
+			}
+		}
+
+		//================================================================================
+		// Add item click handler
+		//================================================================================
+		class RemoveItemHandler implements ClickHandler {
+			public void onClick(ClickEvent event) {
+				orderItemList.remove(selectedItem);
+				fillOrderItemsTable(true, false);
+				cleanUI();
+				displayAddOrder();
+			}
+		}
+
+		btnSendOrder = new PushButton();
+		btnSendOrder.setText("Save order");
+		btnSendOrder.setWidth("910px");
+		btnAddItem = new PushButton();
+		btnAddItem.setText("Add");
+		btnAddItem.setWidth("100px");
+		btnEditItem = new PushButton();
+		btnEditItem.setText("Edit");
+		btnEditItem.setWidth("100px");
+		btnRemoveItem = new PushButton();
+		btnRemoveItem.setText("Remove");
+		btnRemoveItem.setWidth("100px");
+		SaveOrderHandler saveOrderHandler = new SaveOrderHandler();
+		AddItemHandler addItemHandler = new AddItemHandler();
+		EditItemHandler editItemHandler = new EditItemHandler();
+		RemoveItemHandler removeItemHandler = new RemoveItemHandler();
+		btnSendOrder.addClickHandler(saveOrderHandler);
+		btnAddItem.addClickHandler(addItemHandler);
+		btnEditItem.addClickHandler(editItemHandler);
+		btnRemoveItem.addClickHandler(removeItemHandler);
+		orderItemButtonTable = new FlexTable();
+		orderItemButtonTable.setWidget(0, 0, btnAddItem);
+		orderItemButtonTable.setWidget(0, 1, btnEditItem);
+		orderItemButtonTable.setWidget(0, 2, btnRemoveItem);
+		rootPanel.add(orderItemButtonTable);
+		bottomPanel.add(btnSendOrder);
 	}
 }

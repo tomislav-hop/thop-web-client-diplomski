@@ -23,4 +23,6 @@ public interface Service extends RemoteService {
 	
 	String addOrderItems(List<OrderItems> orderItemsList, int orderId);
 	
+	List<OrderItems> getOrderItemList(String orderId);
+	
 }

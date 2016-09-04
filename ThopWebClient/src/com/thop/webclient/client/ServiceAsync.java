@@ -20,4 +20,6 @@ public interface ServiceAsync {
 	void addOrder(Order order, AsyncCallback<Integer> callback);
 
 	void addOrderItems(List<OrderItems> orderItemsList, int orderId, AsyncCallback<String> callback);
+
+	void getOrderItemList(String orderId, AsyncCallback<List<OrderItems>> callback);
 }

@@ -54,4 +54,10 @@ public class ServiceImpl extends RemoteServiceServlet implements Service {
 		oi.addItemsToOrder(orderId, orderItemsList);
 		return null;
 	}
+
+	@Override
+	public List<OrderItems> getOrderItemList(String orderId) {
+		OrderImpl oi = new OrderImpl();
+		return oi.getOrderItemsList(orderId);
+	}
 }
