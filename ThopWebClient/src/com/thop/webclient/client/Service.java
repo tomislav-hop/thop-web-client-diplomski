@@ -21,8 +21,10 @@ public interface Service extends RemoteService {
 
 	Integer addOrder(Order order);
 	
-	String addOrderItems(List<OrderItems> orderItemsList, int orderId);
+	Boolean addOrderItems(List<OrderItems> orderItemsList, int orderId);
 	
 	List<OrderItems> getOrderItemList(String orderId);
+	
+	String getBakeTime(int itemId, String weight);
 	
 }

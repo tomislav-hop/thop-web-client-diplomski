@@ -19,7 +19,9 @@ public interface ServiceAsync {
 
 	void addOrder(Order order, AsyncCallback<Integer> callback);
 
-	void addOrderItems(List<OrderItems> orderItemsList, int orderId, AsyncCallback<String> callback);
+	void addOrderItems(List<OrderItems> orderItemsList, int orderId, AsyncCallback<Boolean> callback);
 
 	void getOrderItemList(String orderId, AsyncCallback<List<OrderItems>> callback);
+
+	void getBakeTime(int itemId, String weight, AsyncCallback<String> callback);
 }

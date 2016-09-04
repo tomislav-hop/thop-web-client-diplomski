@@ -134,7 +134,9 @@ public class ThopWebClient implements EntryPoint {
 
 		Command bakeTimeCommand = new Command() {
 			public void execute() {
-				cleanUI();
+				DialogBox db = bakeTimeDialog();
+				db.setPopupPosition(500, 200);
+				db.show();
 			}
 		};
 
@@ -188,6 +190,7 @@ public class ThopWebClient implements EntryPoint {
 	// Orders table
 	//================================================================================
 	private void getOrderHistoryForUser() {
+		firstTimeHistory = true;
 		SERVICE.getOrderList(userId, new AsyncCallback<List<Order>>() {
 
 			@Override
@@ -258,12 +261,15 @@ public class ThopWebClient implements EntryPoint {
 
 								@Override
 								public void onSuccess(List<OrderItems> result) {
+									//Window.alert("List size: " + result.size());
+
+									historyOrderItemList = result;
+									fillOrderItemsTable(false, true);
 									if (!firstTimeHistory) {
+										//Window.alert("Remove");
 										rootPanel.remove(2);
 									}
 									firstTimeHistory = false;
-									historyOrderItemList = result;
-									fillOrderItemsTable(false, true);
 								}
 							});
 						}
@@ -316,6 +322,7 @@ public class ThopWebClient implements EntryPoint {
 	private void fillOrderItemsTable(boolean reload, boolean history) {
 
 		if (reload) {
+			//Window.alert("RELOAD");
 			rootPanel.remove(2);
 		}
 
@@ -414,12 +421,14 @@ public class ThopWebClient implements EntryPoint {
 		});
 
 		if (history) {
+			//Window.alert("HISTORY");
 			orderItemsTable.setRowCount(historyOrderItemList.size(), true);
 			orderItemsTable.setRowData(0, historyOrderItemList);
 		} else {
 			orderItemsTable.setRowCount(orderItemList.size(), true);
 			orderItemsTable.setRowData(0, orderItemList);
 		}
+		//Window.alert("Add items table");
 		rootPanel.add(orderItemsTable);
 	}
 
@@ -662,18 +671,20 @@ public class ThopWebClient implements EntryPoint {
 
 					@Override
 					public void onSuccess(Integer result) {
-						SERVICE.addOrderItems(orderItemList, result, new AsyncCallback<String>() {
+						SERVICE.addOrderItems(orderItemList, result, new AsyncCallback<Boolean>() {
 
 							@Override
 							public void onFailure(Throwable caught) {
 							}
 
 							@Override
-							public void onSuccess(String result) {
-								if (result.contains("Successfully added")) {
+							public void onSuccess(Boolean result) {
+								if (result) {
 									Window.alert("Order added successfully");
-								}
-								GWT.log(result);
+									cleanUI();
+								}else{
+									Window.alert("Order was not added successfully");
+								}	
 							}
 						});
 
@@ -692,6 +703,7 @@ public class ThopWebClient implements EntryPoint {
 		class AddItemHandler implements ClickHandler {
 			public void onClick(ClickEvent event) {
 				DialogBox panel = getItemDialog(null);
+				panel.setPopupPosition(1300, 100);
 				panel.show();
 			}
 		}
@@ -744,5 +756,61 @@ public class ThopWebClient implements EntryPoint {
 		orderItemButtonTable.setWidget(0, 2, btnRemoveItem);
 		rootPanel.add(orderItemButtonTable);
 		bottomPanel.add(btnSendOrder);
+	}
+
+	//================================================================================
+	// Bake time form
+	//================================================================================
+	private DialogBox bakeTimeDialog(){
+		final DialogBox dialogBox = new DialogBox();
+		dialogBox.setText("Bake time");
+		dialogBox.setAnimationEnabled(true);
+		FlexTable bakeTimeTable = new FlexTable();
+		Label lblItem = new Label("Item:");
+		Label lblWeight = new Label("Weight:");
+		Label lblBakeTime = new Label("Bake time:");
+		final TextBox weight = new TextBox();
+		weight.setWidth("250px");
+		final TextBox bakeTime = new TextBox();
+		bakeTime.setEnabled(false);
+		bakeTime.setWidth("250px");
+		final Button okButton = new Button("Calculate");
+		okButton.addClickHandler(new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				SERVICE.getBakeTime(new Item().getItemId(itemList, itemListBox.getSelectedValue()), weight.getText(), new AsyncCallback<String>() {
+					@Override
+					public void onFailure(Throwable caught) {
+						Window.alert("Method 'getBakeTime' has failed");
+					}
+					@Override
+					public void onSuccess(String result) {
+						bakeTime.setText(result);	
+					}
+				});
+				
+			}
+		});
+		
+		final Button closeButton = new Button("Cancel");
+		closeButton.addClickHandler(new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				dialogBox.hide();
+			}
+		});
+		bakeTimeTable.setWidget(0, 0, lblItem);
+		itemListBox.setWidth("250px");
+		bakeTimeTable.setWidget(0, 1, itemListBox);
+		bakeTimeTable.setWidget(1, 0, lblWeight);
+		bakeTimeTable.setWidget(1, 1, weight);
+		bakeTimeTable.setWidget(2, 0, lblBakeTime);
+		bakeTimeTable.setWidget(2, 1, bakeTime);
+		bakeTimeTable.setWidget(3, 0, okButton);
+		bakeTimeTable.setWidget(3, 1, closeButton);
+		Panel returnPanel = new VerticalPanel();
+		returnPanel.add(bakeTimeTable);
+		dialogBox.setWidget(returnPanel);
+		return dialogBox;
 	}
 }
