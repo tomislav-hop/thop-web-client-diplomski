@@ -24,6 +24,7 @@ import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.Panel;
+import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.PushButton;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextArea;
@@ -44,7 +45,7 @@ public class ThopWebClient implements EntryPoint {
 	private RootPanel rootPanel;
 	private RootPanel bottomPanel;
 	private TextBox nameField;
-	private TextBox passwordField;
+	private PasswordTextBox passwordField;
 	private Button sendButton;
 	private FlexTable loginTable;
 	private FlexTable addOrderTable;
@@ -97,7 +98,7 @@ public class ThopWebClient implements EntryPoint {
 		nameField.setFocus(true);
 		final Label lblPassword = new Label("Password:");
 		lblPassword.setWidth("100px");
-		passwordField = new TextBox();
+		passwordField = new PasswordTextBox();
 		passwordField.setWidth("200px");
 		sendButton = new Button("Login");
 		sendButton.setWidth("316px");
@@ -235,14 +236,15 @@ public class ThopWebClient implements EntryPoint {
 				TextColumn<Order> additionalNotesColumn = new TextColumn<Order>() {
 					@Override
 					public String getValue(Order object) {
-						return object.getOrderDate();
+						return object.getAdditionalNotes();
 					}
 				};
 				orderTable.addColumn(additionalNotesColumn, "Additional notes");
 				TextColumn<Order> idStatusColumn = new TextColumn<Order>() {
 					@Override
 					public String getValue(Order object) {
-						return String.valueOf(object.getStatusId());
+						String statusName = new Status().getStatusName(statusList, (Integer)object.getStatusId());
+						return statusName;
 					}
 				};
 				orderTable.addColumn(idStatusColumn, "Status");
@@ -332,14 +334,15 @@ public class ThopWebClient implements EntryPoint {
 		TextColumn<OrderItems> idOrderItemsColumn = new TextColumn<OrderItems>() {
 			@Override
 			public String getValue(OrderItems object) {
-				return String.valueOf(object.getId_item());
+				String itemName = new Item().getItemName(itemList, (Integer)(object.getId_item()));
+				return itemName;
 			}
 		};
 		orderItemsTable.addColumn(idOrderItemsColumn, "Item ID");
 
 		TextColumn<OrderItems> deadlineColumn = new TextColumn<OrderItems>() {
 			@Override
-			public String getValue(OrderItems object) {
+			public String getValue(OrderItems object) {	
 				return object.getDeadline();
 			}
 		};
@@ -356,7 +359,7 @@ public class ThopWebClient implements EntryPoint {
 		TextColumn<OrderItems> deliveryColumn = new TextColumn<OrderItems>() {
 			@Override
 			public String getValue(OrderItems object) {
-				return String.valueOf(object.getDelivery());
+				return (String.valueOf(object.getDelivery()).equals("1"))?"Yes":"No";
 			}
 		};
 		orderItemsTable.addColumn(deliveryColumn, "Delivery");
@@ -364,7 +367,7 @@ public class ThopWebClient implements EntryPoint {
 		TextColumn<OrderItems> coolColumn = new TextColumn<OrderItems>() {
 			@Override
 			public String getValue(OrderItems object) {
-				return String.valueOf(object.getCool());
+				return (String.valueOf(object.getCool()).equals("1"))?"Yes":"No";
 			}
 		};
 		orderItemsTable.addColumn(coolColumn, "Cool");
@@ -372,7 +375,7 @@ public class ThopWebClient implements EntryPoint {
 		TextColumn<OrderItems> cutColumn = new TextColumn<OrderItems>() {
 			@Override
 			public String getValue(OrderItems object) {
-				return String.valueOf(object.getCut());
+				return (String.valueOf(object.getCut()).equals("1"))?"Yes":"No";
 			}
 		};
 		orderItemsTable.addColumn(cutColumn, "Cut");
@@ -380,7 +383,8 @@ public class ThopWebClient implements EntryPoint {
 		TextColumn<OrderItems> packageColumn = new TextColumn<OrderItems>() {
 			@Override
 			public String getValue(OrderItems object) {
-				return String.valueOf(object.getId_package());
+				String returnPackage = new Package().getPackageName(packageList, (Integer)(object.getId_package()));
+				return returnPackage;
 			}
 		};
 		orderItemsTable.addColumn(packageColumn, "Package");
